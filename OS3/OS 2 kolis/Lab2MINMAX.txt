@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ $# -ne 2 ] ; then
+	echo "reikalingi 2 parametrai"
+	exit 1
+fi
+if [ ! -d $1 ]; then
+	echo "pirmas argumentas turi buti katalogas"
+	exit 1
+fi
+
+filelist=$(ls -l "$1" | grep sa_ | awk '{print $9}') #get only sa_ files and get their names
+
+for file in $filelist; do
+	path=$(echo $1"/"$file)
+	cnt=$(wc -l "$path" | awk '{print $1}')
+	min=$(sar -u -f "$path" | tail +5 | grep ^[0-9] | awk 'BEGIN{min=100;}{min=(min > $5)?$5:min;}END{print min;}')
+	max=$(sar -u -f "$path" | tail +5 | grep ^[0-9] | awk 'BEGIN{max=0;}{max=(max < $5)? $5 : max;}END{print max;}')
+	echo $path " min="$min " max="$max
+	ltcnt=$(sar -u -f "$path" | tail +5 | grep ^[0-9] | awk -v arg=$2 'BEGIN{count=0;}{if( $5 < arg ){count++}}END{print count}')
+	if [ $ltcnt -ne 0 ]; then
+		sar -u -f "$path" | tail +4 | grep ^[0-9] | awk -v arg=$2 '{if( NR == 1 ){print $0}else if($5 < arg){print $0 " < " arg}}'
+	fi
+done

@@ -1,0 +1,65 @@
+/*
+Sukurkite C programà loginas_ld3.c , kuri:
+
+    pabandytø pirmu komandinës eilutës argumentu nurodytà failà "primapinti" á proceso adresø erdvæ;
+    jei pavyko - iðkviestø ðio failo N-ojo baito reikðmæ (ið primapinto regiono) á ekranà (kaip sveikà skaièiø), N nurodomas antru komandinës eilutës argumentu (N prasmë kaip C masyvo indekso, t.y. N=0 -> pirmas baitas);
+    programa turi apdoroti galimas klaidas.
+
+PASTABA: nebûtina mapinti viso failo (t.y. ar primapinsit visà, ar tik dalá failo - átakos ávertinimui neturës).
+
+Pasitikrinimui: Jûsø programa turëtø iðvesti:
+
+    /home/kespaul/ld3test/f1 : kai N=2000 - 29, kai N=4000 - 61.
+    /home/kespaul/ld3test/f2 : kai N=2000 - 6, kai N=4000 - 95.
+*/
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/stat.h>  
+#include <errno.h>
+
+int main(int argc, char *argv[]) {
+ 	int input;
+ 	size_t filesize;
+	struct stat info;
+ 	char *data;
+	int nth_byte;
+	
+	if(argc != 3) {
+		perror("Netinkamas argumentu kiekis");
+		exit(1);
+	}
+
+	nth_byte = atoi(argv[2]);
+
+	if((input = open(argv[1], O_RDONLY)) == -1) {
+		perror("open");
+		exit(1);
+	}
+	
+	if(fstat(input, &info) == -1) {
+		perror("fstat failed");
+		exit(1);
+	}
+
+	filesize = (size_t)info.st_size;
+
+	data = mmap((caddr_t)0, filesize, PROT_READ, MAP_SHARED, input, 0);
+	
+	if(data == (caddr_t)(-1)) {
+		perror("mmap failed");
+		exit(1);
+	}
+
+        printf("Failo dydis: %d\n", (int) filesize);
+        printf("'%d'\n", (int) data[nth_byte]);
+
+	ftruncate(input, filesize);
+	munmap(data, filesize);
+	close(input);
+	return 0;
+}

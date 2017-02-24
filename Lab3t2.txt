@@ -1,0 +1,61 @@
+/*
+atidaryti failą, nuskaityti TIK paskutinį failo baitą (neskaitant viso likusio failo) ir atspausdinti jį
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+
+int ap_open(const char *path)
+{
+	int d = open(path, O_RDONLY);
+	if(d == -1)
+	{
+		printf("Įvyko klaida skaitant failą %s.\n", path);
+		exit(1);
+	}
+	return d;
+}
+
+int ap_close(int d)
+{
+	if(close(d) == -1)
+	{
+		printf("Įvyko klaida uždarant failą.\n");
+		exit(1);
+	}
+	return 0;
+}
+
+int ap_read_print_last_byte(int d)
+{
+	char *byte = NULL;
+	byte = malloc(1);
+	lseek(d, -1, SEEK_END);
+	if(read(d, byte, 1) == -1)
+	{
+		printf("Baito skaitymas nepavyko!\n");
+		exit(1);
+	}
+	printf("Paskutinis failo baitas: %d\n", (int)*byte);
+	free(byte);
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	int file;
+	printf("(C) 2014 Andrius Paulauskas, %s\n", __FILE__);
+	if(argc != 2)
+	{
+		printf("Programai nenorodytas reikalingas kiekis argumentų.\n");
+		printf("Būtina nurodyti failą iš kurio norite nuskaityti paskutinį baitą.\n");
+		exit(1);
+	}
+	file = ap_open(argv[1]);
+	ap_read_print_last_byte(file);
+	ap_close(file);
+	return 0;
+}

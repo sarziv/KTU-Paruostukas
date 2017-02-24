@@ -1,0 +1,22 @@
+﻿#!/bin/sh
+echo "Iveskite vartotoja:"
+read vart
+for i in $vart
+do	
+	if id -u $i > /dev/null 2>&1
+	then
+		echo "Informacija apie vartotoja $i:"
+		echo "-----------------------------"
+		echo "Vartotojo grupes:"
+		echo `groups $i`
+		kiek=`ps -U $i | wc -l | awk '{ print $1 }'`
+		echo "Vartotojas vykdo $kiek procesus(-a, -u)."
+		kiekSSHD=`ps -U $i | grep "sshd" | wc -l | awk '{ print $1 }'`
+		echo "vyksta $kiekSSHD sesiju."
+		ps -U $i | grep "sshd"
+		echo "---------------------------"
+	else
+		echo "Tokio vartotojo nera."
+		echo "---------------------------"
+	fi
+done

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+more $1 | grep 'Failed password' > failed
+more failed | awk '{ print $15 }' | sort | uniq > failedIPs
+more failed | grep -v 'invalid username' | awk '{ print $14 }' | sort | uniq >> failedIPs
+more failedIPs | sort | uniq | grep -v 'port' > failedIPs2
+> illegalTEMP
+for i in `more failedIPs2` ; do
+	more $1 | grep "Illegal" | grep $i | awk '{ print $11 }' | sort | uniq >> illegalTEMP
+done
+more illegalTEMP | sort | uniq > illegal
+echo "Bandyta laužtis iš šiu IP:"
+for i in `more failedIPs2`; do
+	echo $i	
+done
+echo "------------------------------"
+echo "Atspeti loginai:"
+for i in `more illegal`; do
+	echo $i
+done

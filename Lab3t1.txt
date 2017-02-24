@@ -1,0 +1,99 @@
+/*
+Sukurkite C programà loginas_ld3.c , kuri:
+priimta 3 komandinës eilutës argumentus
+pakeisti darbiná katalogà á pirmu argumentu norodytà
+atidaryti antru komandinës eilutës argumentu nurodytà failà tik skaitymui su fopen() funkcija;
+atidaryti treèiu argumentu nurodytà failà raðymui
+nuskaityti ið pirmo failo su fread() ir áraðytø á antrà failà su fwrite()1024 baitus (jei tiek yra pirmame faile)
+atspausdinti pirmo ir paskutinio nukopijuotø baitø reikðmes (intervalas 0..255, arba -128..127)
+programa turi apdoroti galimas klaidas.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <string.h>
+#define SIZE 1024
+
+int kp_test_getcwd(char * folder);
+FILE *TJ_open(const char *path, const char *oflag);
+int TJ_baitai(FILE *d1,FILE *d2,size_t sk);
+size_t failas(const char * file) ;
+
+size_t failas(const char * file) {
+    struct stat buffer;
+    int st;
+	size_t size; 
+	st = stat(file, &buffer);
+	size = buffer.st_size;
+	return size;
+}
+
+int kp_test_getcwd(char * folder){	
+   char *cwd;
+   int new;
+   cwd = getcwd( NULL, pathconf( ".", _PC_PATH_MAX) );
+   puts( cwd );
+   new = chdir(folder);
+   cwd = getcwd( NULL, pathconf( ".", _PC_PATH_MAX) );
+   puts( cwd );
+   return 1;
+}
+FILE *TJ_open(const char *path, const char *oflag){
+	FILE *d;
+	d = fopen(path,oflag);
+	if(d == NULL){
+		perror( path );
+		exit( 1 );
+	}
+	return d;
+}
+int TJ_baitai(FILE *d1,FILE *d2,size_t sk){
+	char *buf;
+	int wrt,bitas;
+	size_t count,rd;
+	buf = malloc(sizeof(char));
+	bitas = 1;
+	count = 0;
+	while( count < sk ){
+		rd = fread(buf,1,bitas,d1);
+		if( rd == -1 ){
+			printf("NEPAVYKO!");
+			exit(1);
+		} 
+		if(count == 0)
+		puts( buf );
+		wrt = fwrite(buf,1,bitas,d2);
+		if(wrt != rd){
+			printf("Nepavyko!");
+			exit(1);
+		}
+		count += wrt;
+		if(count == sk)
+		puts( buf );
+	}
+	return 0;
+} 
+
+int main( int argc, char * argv[] ){
+	FILE *a, *b;
+	int bait = 1024;
+   printf( "(C) 2014 Tomas Juscius, %s\n", __FILE__ );
+   if( argc != 4 ){
+      printf( "Naudojimas:\n %s katalogas failas failas2\n", argv[0] );
+      exit( 255 );
+   }
+   kp_test_getcwd(argv[1]);
+   a = TJ_open(argv[2],"r");
+   b = TJ_open(argv[3],"w");
+   if(bait > failas(argv[2]))
+		bait = failas(argv[2]);
+   TJ_baitai(a,b,bait);
+   
+   return 0;
+}
